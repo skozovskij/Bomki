@@ -6,14 +6,14 @@ from telegram import Update, Bot
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
-    ContextTypes
+    ContextTypes,
+    MessageHandler,
+    filters
 )
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-
 DATA_FILE = "users.json"
-
 
 HELP_TEXT = (
     "  Доступні команди:\n"
@@ -22,7 +22,6 @@ HELP_TEXT = (
     "/статус — переглянути, за які місяці вже здано\n"
     "/help — показати цей список команд\n"
 )
-
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
@@ -42,7 +41,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Ти вже зареєстрований.")
 
     await update.message.reply_text(HELP_TEXT)
-
 
 async def submit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
@@ -64,7 +62,6 @@ async def submit(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Ти ще не зареєстрований. Використай /start.")
     else:
         await update.message.reply_text("Дані не знайдено. Використай /start.")
-
 
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
@@ -94,6 +91,12 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(HELP_TEXT)
 
+async def unknown_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    command = update.message.text
+    await update.message.reply_text(
+        f"Команда `{command}` не розпізнана.\nСпробуй /help, щоб побачити доступні команди."
+    )
+
 def monthly_check(bot: Bot):
     today = datetime.today()
     current_month = today.strftime("%Y-%m")
@@ -116,17 +119,17 @@ def weekly_reminder(bot: Bot):
 
         for user_id, data in users.items():
             if current_month not in data.get("submitted_months", []):
-                bot.send_message(chat_id=user_id, text=f"Нагадування: Ти ще не здав за {current_month}. Не забудьть!")
-
+                bot.send_message(chat_id=user_id, text=f"Нагадування: Ти ще не здав за {current_month}. Не забудь!")
 
 async def main():
-    bot_token = "7503125819:AAHNfAUw4Z5JieHb6_wvZwXcl0nuCgzvNAs" 
+    bot_token = "7503125819:AAHNfAUw4Z5JieHb6_wvZwXcl0nuCgzvNAs"
     app = ApplicationBuilder().token(bot_token).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("здати", submit))
     app.add_handler(CommandHandler("статус", status))
     app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(MessageHandler(filters.COMMAND, unknown_command))  # Обробка невідомих команд
 
     bot = Bot(token=bot_token)
 
@@ -137,7 +140,6 @@ async def main():
 
     print("active")
     await app.run_polling()
-
 
 if __name__ == "__main__":
     import asyncio
