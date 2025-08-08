@@ -18,8 +18,8 @@ DATA_FILE = "users.json"
 HELP_TEXT = (
     "  Доступні команди:\n"
     "/start — зареєструватися в системі\n"
-    "/здати — позначити, що ви здали за поточний місяць\n"
-    "/статус — переглянути, за які місяці вже здано\n"
+    "/zdaty — позначити, що ви здали за поточний місяць\n"
+    "/status — переглянути, за які місяці вже здано\n"
     "/help — показати цей список команд\n"
 )
 
@@ -126,8 +126,8 @@ async def main():
     app = ApplicationBuilder().token(bot_token).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("здати", submit))
-    app.add_handler(CommandHandler("статус", status))
+    app.add_handler(CommandHandler("zdaty", submit))
+    app.add_handler(CommandHandler("status", status))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(MessageHandler(filters.COMMAND, unknown_command))  # Обробка невідомих команд
 
@@ -143,4 +143,11 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(main())
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    loop.run_until_complete(main())
